@@ -1,0 +1,146 @@
+Resources:
+#create VPC
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      CidrBlock: 12.0.0.0/16
+
+  #create three subnets
+  SubnetOne:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "eu-west-2a"
+      VpcId: !Ref 'VPC'
+      CidrBlock: 12.0.1.0/24
+
+  SubnetTwo:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "eu-west-2b"
+      VpcId: !Ref 'VPC'
+      CidrBlock: 12.0.2.0/24
+
+  SubnetThree:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "eu-west-2c"
+      VpcId: !Ref 'VPC'
+      CidrBlock: 12.0.3.0/24
+
+#Internet Gateway created
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+#Attaching InternetGateway to VPC
+  GatewayAttachement:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: 
+        Ref: VPC
+      InternetGatewayId: !Ref 'InternetGateway'
+  
+  #RouteTable created
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref 'VPC'
+  
+  #Route added to routetable
+  Route:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachement
+    Properties:
+      RouteTableId: !Ref 'RouteTable'
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId: !Ref 'InternetGateway'
+  
+  #SubnetAssociated RouteTable
+  SubnetOneRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetOne
+      RouteTableId: !Ref RouteTable
+
+  #SubnetAssociated RouteTable
+  SubnetTwoRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetTwo
+      RouteTableId: !Ref RouteTable
+
+  #EC2 Instance 1
+  InstanceOne:
+    Type: AWS::EC2::Instance
+    Properties:
+      KeyName: firstkey
+      InstanceType: t2.micro
+      NetworkInterfaces: 
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          SubnetId: !Ref SubnetOne
+          GroupSet:
+            - !Ref "SSHSecurityGroup"
+            - !Ref "ServerSecurityGroup"
+      ImageId: ami-006a0174c6c25ac06
+
+  #EC2 Instance 2
+  InstanceTwo:
+    Type: AWS::EC2::Instance
+    Properties:
+      KeyName: firstkey
+      InstanceType: t2.micro
+      NetworkInterfaces: 
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          SubnetId: !Ref SubnetTwo
+          GroupSet:
+            - !Ref "SSHSecurityGroup"
+            - !Ref "ServerSecurityGroup"
+      ImageId: ami-006a0174c6c25ac06
+
+  #SSH sec
+  SSHSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref 'VPC'
+      GroupDescription: Allow SSH
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 22
+        IpProtocol: tcp
+        ToPort: 22
+  
+  #80 sec
+  ServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref 'VPC'
+      GroupDescription: Allow server sec
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 80
+        IpProtocol: tcp
+        ToPort: 80
+
+  #LoadB sec
+  LoadBalancerSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow VPC
+      VpcId: !Ref 'VPC'
+      SecurityGroupIngress:
+          - CidrIp: 0.0.0.0/0
+            IpProtocol: -1
+
+  #LoadB
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internet-facing
+      Subnets:
+        - !Ref SubnetOne
+        - !Ref SubnetTwo
+        - !Ref SubnetThree
+      SecurityGroups: [!Ref 'LoadBalancerSG']
