@@ -5,13 +5,13 @@
 
 
 ## Concepts:
-    1. Sessions
-    2. Resource
-    3. Client
-    4. Meta
-    5. Collections
-    6. Waiters
-    7. Paginators
+1. Sessions
+2. Resource
+3. Client
+4. Meta
+5. Collections
+6. Waiters
+7. Paginators
 
 
 ## Sessions
@@ -87,3 +87,25 @@
 - Useful to enter into client object from resource 
 - We have every required operation via client object. This isn't the same for resource object. So let's say you started a code with resource object and then realised later on that the operation you wanted to perform isn't avaliable. Through Meta, you don't have to start your code from scratch again. 
 
+
+## Collections
+- Submethods:
+    1. all 
+        - gets all the instances 
+    2. limit 
+        - can limit the amount of instances obtained
+    3. filter 
+        - you can filter them based on state, instance-type & etc
+    4. create_tags
+        - creating tags
+    5. monitor
+    6. page_size
+    7. pages
+    8. reboot
+    9. start
+        - starts instances
+    10. stop
+        - stops instances
+    11. terminate
+        - terminates instances
+    12. unmonitor
